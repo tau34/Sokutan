@@ -12,6 +12,8 @@ function App() {
   const [playbackRate, setPlaybackRate] = useState(1);
   const [repeatMode, setRepeatMode] = useState<RepeatMode>(
     localStorage.getItem("repeatMode") as RepeatMode || "off");
+  const [skipSeconds, setSkipSeconds] = useState(
+    Number(localStorage.getItem("skipSeconds") || "3"));
 
   const audioRef = useRef<AudioPlayer>(null);
   const inputRangeRef = useRef<HTMLInputElement>(null);
@@ -335,6 +337,23 @@ function App() {
           <span>詳細オプション</span>
           <span className="text-sm text-slate-500 transition-transform group-open:rotate-180">Ⅴ</span>
         </summary>
+        <div className="mt-4 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
+          <label className="flex items-center space-x-2">
+            <span>スキップの秒数:</span>
+            <input
+              type="number"
+              min="1"
+              value={skipSeconds}
+              onChange={(e) => {
+                const seconds = Number(e.target.value);
+                setSkipSeconds(seconds);
+                localStorage.setItem("skipSeconds", `${seconds}`);
+              }}
+              className="border border-gray-300 rounded px-2 py-1 w-16"
+            />
+              秒
+          </label>
+        </div>
       </details>
     </div>
   )
