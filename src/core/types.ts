@@ -9,3 +9,5 @@ export type AudioSource = {
   name: string
   url: string
 }
+
+export type RepeatMode = "off" | "one" | "all" | "custom"

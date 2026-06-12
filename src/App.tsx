@@ -3,20 +3,28 @@ import "react-h5-audio-player/lib/styles.css";
 import './App.css'
 import { books } from './core/books';
 import AudioPlayer from "react-h5-audio-player";
+import type { RepeatMode } from './core/types';
 
 function App() {
   const [bookId, setBookId] = useState(0);
   const [audioId, setAudioId] = useState(0);
   const [trackNo, setTrackNo] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
-  const [repeatMode, setRepeatMode] = useState<"off" | "one" | "all" | "custom">("off");
+  const [repeatMode, setRepeatMode] = useState<RepeatMode>(
+    localStorage.getItem("repeatMode") as RepeatMode || "off");
 
   const audioRef = useRef<AudioPlayer>(null);
   const inputRangeRef = useRef<HTMLInputElement>(null);
   const book = books[bookId];
 
-  const [customRepeatStart, setCustomRepeatStart] = useState(1);
-  const [customRepeatEnd, setCustomRepeatEnd] = useState(book.number);
+  const crs = Number(localStorage.getItem("customRepeatStart") || "1");
+  const cre = Number(localStorage.getItem("customRepeatEnd") || `${book.number}`);
+  function clamp(x: number) {
+    return Math.min(Math.max(x, 1), book.number);
+  }
+
+  const [customRepeatStart, setCustomRepeatStart] = useState(clamp(crs));
+  const [customRepeatEnd, setCustomRepeatEnd] = useState(clamp(cre));
 
   function updateRate(rate: number) {
     if (audioRef.current) {
@@ -169,7 +177,7 @@ function App() {
         </select>
       </label>
       {trackNo === 0 && <>
-        <p className="text-lg mb-4">番号を選択:</p>
+        <p className="text-lg mb-4">トラック番号を選択:</p>
         <div className="grid grid-cols-5 gap-2 mb-4">
           {Array.from({ length: book.number }, (_, i) => (
             <button
@@ -182,11 +190,17 @@ function App() {
           ))}
         </div>
       </>}
-      {trackNo > 0 && (
+      {trackNo > 0 && (<>
         <p className="text-lg mb-4">
           {trackNo}.{book.sections[trackNo - 1]}
         </p>
-      )}
+        <button
+          className="mb-4 border border-gray-300 rounded px-4 py-1"
+          onClick={() => setTrackNo(0)}
+        >
+          トラック番号選択に戻る
+        </button>
+      </>)}
       <div className="w-[80%] mb-6">
         <AudioPlayer
           src={`${book.audios[audioId].url}${trackNo.toString().padStart(2, '0')}.mp3`}
@@ -204,15 +218,15 @@ function App() {
         </button>
         <button
           className="mr-3 border border-gray-300 rounded px-4 py-1 mx-1"
-          onClick={() => skipTime(-3)}
+          onClick={() => skipTime(-skipSeconds)}
         >
-          -3s
+          -{skipSeconds}s
         </button>
         <button
           className="border border-gray-300 rounded px-4 py-1 mx-1"
-          onClick={() => skipTime(3)}
+          onClick={() => skipTime(skipSeconds)}
         >
-          +3s
+          +{skipSeconds}s
         </button>
         <button className="ml-3" onClick={() => moveTrack(1)}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="#868686">
@@ -267,7 +281,10 @@ function App() {
         <select
           className="border border-gray-300 rounded px-2 py-1"
           value={repeatMode}
-          onChange={(e) => setRepeatMode(e.target.value as "off" | "one" | "all" | "custom")}
+          onChange={(e) => {
+            setRepeatMode(e.target.value as RepeatMode);
+            localStorage.setItem("repeatMode", e.target.value);
+          }}
         >
           <option value="off">オフ</option>
           <option value="one">トラック</option>
@@ -286,8 +303,10 @@ function App() {
             onChange={(e) => {
               const newStart = Number(e.target.value);
               setCustomRepeatStart(newStart);
+              localStorage.setItem("customRepeatStart", `${newStart}`);
               if (customRepeatEnd < newStart) {
                 setCustomRepeatEnd(newStart);
+                localStorage.setItem("customRepeatEnd", `${newStart}`);
               }
             }}
             className="border border-gray-300 rounded px-2 py-1 w-16"
@@ -301,14 +320,22 @@ function App() {
             onChange={(e) => {
               const newEnd = Number(e.target.value);
               setCustomRepeatEnd(newEnd);
+              localStorage.setItem("customRepeatEnd", `${newEnd}`);
               if (customRepeatStart > newEnd) {
                 setCustomRepeatStart(newEnd);
+                localStorage.setItem("customRepeatStart", `${newEnd}`);
               }
             }}
             className="border border-gray-300 rounded px-2 py-1 w-16"
           />
         </label>
       </>)}
+      <details className="group mt-6 w-[60%] max-w-lg rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-sm backdrop-blur-sm">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-lg font-medium text-slate-700">
+          <span>詳細オプション</span>
+          <span className="text-sm text-slate-500 transition-transform group-open:rotate-180">Ⅴ</span>
+        </summary>
+      </details>
     </div>
   )
 }
