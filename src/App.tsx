@@ -382,6 +382,7 @@ function App() {
           <span className="text-sm text-slate-500 transition-transform group-open:rotate-180">Ⅴ</span>
         </summary>
         <div className="mt-4 flex flex-col items-center gap-3 text-slate-600">
+          {history.length === 0 && <p className="text-sm text-slate-500">再生履歴はありません</p>}
           {history.map((track, index) => (
             <div key={index} onClick={() => {
               setBookId(track.bookId);
